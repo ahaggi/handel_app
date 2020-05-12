@@ -246,7 +246,7 @@ class _ChartWidgetState extends State<ChartWidget> {
     bool isRealData = Random().nextInt(4) == 1;
     outputStream =
         isRealData ? _generateStreamForChartData() : _generateDummyData();
-    print("############ is real data:  $isRealData #############");
+    print("############ db data:  $isRealData #############");
     setState(() {});
   }
 
@@ -310,7 +310,10 @@ class _ChartWidgetState extends State<ChartWidget> {
         // .where((event)=> event["key"]> 17)
         .map((event) {
       Map<String, dynamic> data = event["data"];
-
+Map<String, dynamic> prnt = event["data"]["produkter"];
+      prnt.forEach((k,v){
+        print("$k : \n $v \n\n");
+      });
       data.forEach((k, v) {
         if (k == "produkter") return;
         var xLabelDomain = event[

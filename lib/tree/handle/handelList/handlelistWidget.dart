@@ -11,20 +11,21 @@ class HandleListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget getList(List<DocumentSnapshot> documents) {
 
-      // Qry.filterProdukt(qry: (docSnapshot)=> docSnapshot.data[NAVN].toString().toLowerCase().contains("cashew") ).listen((docSnapshot){
-      //   print(docSnapshot.documentID);
+      // Qry.filterProdukt(qry: (docSnapshot)=> docSnapshot.data[STREKKODE] == 7039010535250 ).listen((docSnapshot){
+      //   print(docSnapshot.data);
       // });
 
       // Qry.filterVarerForGivenCondition(
-      //   qryForOuterAttr: (handelDocSnapshot) => true,
-      //   qryForVarer: (vare) => vare[PRODUKT_ID].toString().toLowerCase().contains("7033250103972"),
-      // ).listen((data) => print(data ));
+      //   qryForOuterAttr: (handelDocSnapshot) => (handelDocSnapshot.data[BUTIKK]??"").toString().toLowerCase().contains("rema"),
+      //   qryForVarer: (vare) => (vare[NAVN].toString().toLowerCase().contains("spagh") && vare[PRODUKT_ID].toString() != "101010108318"),
+      // ).listen((data) => print("${data['handelInfo'][DATO]}  \n  ${data['vare']['navn']} \n  ${data['vare'][PRODUKT_ID]}\n  ${data['vare'][STREKKODE]}" ));
 
-      // Qry.filterHandelForGivenCondition(
-      //         qry: (docSnapshot) => docSnapshot.data[BUTIKK]?.toString()?.toLowerCase().contains("extra")   )
-      //     .listen((docSnapshot) => print("${docSnapshot.data[BUTIKK]} +   ${docSnapshot.data[DATO]}"));
+      Qry.filterVarerForGivenCondition(
+        qryForOuterAttr: (handelDocSnapshot) => true,
+        qryForVarer: (vare) => vare[NAVN].toString().toLowerCase().contains("hand") ,
+      ).listen((data) => print("${data['handelInfo'][DATO]}  \n  ${data['vare']['navn']} \n  ${data['vare'][PRODUKT_ID]}\n  ${data['vare'][STREKKODE]}" ));
 
-      DataDB.backupAll(colPath: HANDEL_PATH);
+      // DataDB.backupAll(colPath: HANDEL_PATH);
 
       // DataDB.getChartData(
       //         groupBy_: GroupBy.MONTH,
@@ -34,6 +35,7 @@ class HandleListWidget extends StatelessWidget {
       //         Util.printChartDataAsProdukterSortedBy(
       //             inputMap: map, compareBy: "Kostnad", take: 10));
       // DataDB.getChartData(groupBy_: GroupBy.MONTH, chartDataType: ChartDataType.NUTRITIONAL_CONTENT).listen(print);
+      
       // DataDB.getChartData(groupBy_: GroupBy.MONTH, chartDataType: ChartDataType.NUMBER_OF_GOODS).listen(print);
       // DataDB.getChartData(groupBy_: GroupBy.WEEK,  chartDataType: ChartDataType.NUTRITIONAL_CONTENT).listen(print);
       // DataDB.getChartData(groupBy_: GroupBy.WEEK,  chartDataType: ChartDataType.NUMBER_OF_GOODS).listen(print);
