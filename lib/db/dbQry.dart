@@ -129,10 +129,9 @@ class Qry {
         obsvHandle$.groupBy((handelDataMap) {
       if (groupBy == GroupBy.MONTH)
         return DateTime.parse(handelDataMap[DATO].toString()).month;
-      else if (groupBy == GroupBy.WEEK)
+      else //if (groupBy == GroupBy.WEEK)
         return handelDataMap[UKE_NR];
-      else
-        return handelDataMap[BUTIKK];
+      
     });
 
     var memoProdukter = Map<String, dynamic>();
