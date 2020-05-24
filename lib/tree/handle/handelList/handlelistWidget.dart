@@ -30,18 +30,6 @@ class HandleListWidget extends StatelessWidget {
 
       // DataDB.backupAll(colPath: HANDEL_PATH);
 
-  Stopwatch s = new Stopwatch();
-  s.start();
-	
-      Qry.getChartData(
-              groupBy: GroupBy.MONTH,
-              chartDataType: ChartDataType.NUTRITIONAL_CONTENT,
-              foldingby: FoldingBy.FOLD)
-              .listen((h) { print(h);
-                print("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤${s.elapsedMilliseconds}¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤"); // around 3000ms
-});
-
-  print("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤${s.elapsedMilliseconds}¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤"); // around 3000ms
 
       // DataDB.getChartData(
       //         groupBy_: GroupBy.MONTH,
