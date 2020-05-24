@@ -1,5 +1,3 @@
-
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:handle_app/tree/todo/utilWidget/util.dart';
@@ -8,7 +6,7 @@ import 'package:handle_app/db/db.dart';
 import 'package:handle_app/config/attrconfig.dart';
 import 'package:handle_app/config/attrconfig_db.dart';
 
-class Qry{
+class Qry {
   // // /**
 // //  *
 // //  *
@@ -21,33 +19,49 @@ class Qry{
 // //  *
 // //  */
 
-
   static Observable<dynamic> _produceChartDataForEachVare(
-      {@required Observable obsVare$, @required ChartDataType chartDataType}) {
+      {@required Observable obsVare$,
+      @required ChartDataType chartDataType,
+      @required Map<String, dynamic> memoProdukter}) {
     var obs$ = obsVare$.concatMap((vareSnapshot) {
-      var obsOneProdukt$ = DataDB.getCollectionSnapshotAsObservable(colPATH: PRODUKT_PATH)
-          .expand((prodDocSnapshotList) => prodDocSnapshotList)
-          .map((prodDocSnapshot) => prodDocSnapshot)
-          //OBS "firstWhere" does NOT filter events as "where", and it has to return (elem or err)
-          .firstWhere(
-              //Stops listening to this stream after the first matching element or error has been received.
-              (prodDocSnapshot) {
-            return (vareSnapshot[PRODUKT_ID].toString() == prodDocSnapshot.documentID);
-          }, orElse: () {
-            // This is to avoid throwing an exception
-            print(vareSnapshot[PRODUKT_ID].toString());
-            return null;
-          })
-          .asObservable()
-          .where(// checks whether firstWhere found matching "produkt" and its ER_MATVARE
-              (prodDataMap) {
-            if (prodDataMap == null) //
-              print("prodDataMap == null");
-            return (prodDataMap != null &&
-                prodDataMap.data[ER_MATVARE] != null &&
-                prodDataMap[ER_MATVARE]);
-          })
-          .map((prodDocSnapshot) => prodDocSnapshot.data);
+      var obsOneProdukt$;
+
+      var vareProduktId = vareSnapshot[PRODUKT_ID].toString();
+
+      if (memoProdukter[vareProduktId] == null) {
+        obsOneProdukt$ = DataDB.getCollectionSnapshotAsObservable(
+                colPATH: PRODUKT_PATH)
+            .expand((prodDocSnapshotList) => prodDocSnapshotList)
+            .map((prodDocSnapshot) => prodDocSnapshot)
+            //OBS "firstWhere" does NOT filter events as "where", and it has to return (elem or err)
+            .firstWhere(
+                //Stops listening to this stream after the first matching element or error has been received.
+                (prodDocSnapshot) {
+              return (vareProduktId ==
+                  prodDocSnapshot.documentID);
+            }, orElse: () {
+              // This is to avoid throwing an exception
+              print(vareProduktId);
+              return null;
+            })
+            .asObservable()
+            .where(
+                // checks whether firstWhere found matching "produkt" and its ER_MATVARE
+                (prodDataMap) {
+              if (prodDataMap == null) //
+                print("prodDataMap == null");
+              return (prodDataMap != null &&
+                  prodDataMap.data[ER_MATVARE] != null &&
+                  prodDataMap[ER_MATVARE]);
+            })
+            .map((prodDocSnapshot)  {
+              // add the "vare" to memoProdukter 
+              memoProdukter[vareProduktId] = prodDocSnapshot.data;
+            return prodDocSnapshot.data;
+            });
+      }else{
+        obsOneProdukt$ =  Observable<dynamic>.just(memoProdukter[vareProduktId]);
+      }
 
       if (chartDataType == ChartDataType.NUTRITIONAL_CONTENT) {
         return obsOneProdukt$.map((prodDataMap) {
@@ -56,21 +70,26 @@ class Qry{
           var mengde = vareSnapshot[MENGDE];
           var pris = vareSnapshot[TOTALPRIS];
 
-          var andelEnergi = (prodDataMap[INFO][NAERINGSINNHOLD][ENERGI] / 100);
+          var energiPerGram =
+              (prodDataMap[INFO][NAERINGSINNHOLD][ENERGI] / 100);
 
-          var andelKalorier = (prodDataMap[INFO][NAERINGSINNHOLD][KALORIER] / 100);
+          var kalorierPerGram =
+              (prodDataMap[INFO][NAERINGSINNHOLD][KALORIER] / 100);
 
-          var andelKarbohydrater = (prodDataMap[INFO][NAERINGSINNHOLD][KARBOHYDRATER] / 100);
-          var andelFett = (prodDataMap[INFO][NAERINGSINNHOLD][FETT] / 100);
-          var andelProtein = (prodDataMap[INFO][NAERINGSINNHOLD][PROTEIN] / 100);
+          var karbohydraterPerGram =
+              (prodDataMap[INFO][NAERINGSINNHOLD][KARBOHYDRATER] / 100);
+          var fettPerGram = (prodDataMap[INFO][NAERINGSINNHOLD][FETT] / 100);
+          var proteinPerGram =
+              (prodDataMap[INFO][NAERINGSINNHOLD][PROTEIN] / 100);
 
           data["produkt"] = prodDataMap[NAVN];
 
-          data[ENERGI] = mengde * (nettovekt * 1000) * andelEnergi;
-          data[KALORIER] = mengde * (nettovekt * 1000) * andelKalorier;
-          data[KARBOHYDRATER] = mengde * (nettovekt * 1000) * andelKarbohydrater;
-          data[FETT] = mengde * (nettovekt * 1000) * andelFett;
-          data[PROTEIN] = mengde * (nettovekt * 1000) * andelProtein;
+          data[ENERGI] = mengde * (nettovekt * 1000) * energiPerGram;
+          data[KALORIER] = mengde * (nettovekt * 1000) * kalorierPerGram;
+          data[KARBOHYDRATER] =
+              mengde * (nettovekt * 1000) * karbohydraterPerGram;
+          data[FETT] = mengde * (nettovekt * 1000) * fettPerGram;
+          data[PROTEIN] = mengde * (nettovekt * 1000) * proteinPerGram;
           data["Kostnad"] = pris;
 
           return data;
@@ -87,29 +106,36 @@ class Qry{
   static Observable<dynamic> getChartData(
       {month_todo,
       year_todo,
-      @required groupBy_,
+      @required groupBy,
       @required ChartDataType chartDataType,
       FoldingBy foldingby: FoldingBy.FOLD}) {
+    var fromDate = DateTime.now();
+    if (groupBy == GroupBy.MONTH)
+      fromDate = fromDate.subtract(Duration(days: 182)); // last 6 months
+    else
+      fromDate = fromDate.subtract(Duration(days: 91)); // last 3 months
+
     var obsvHandle$ = // Stream of <Map handel>
         DataDB.getCollectionSnapshotAsObservable(colPATH: HANDEL_PATH)
             .expand((docSnapshotList) => docSnapshotList)
             .map((docSnapshot) => docSnapshot.data)
             .where((handelDataMap) {
       var _dato = DateTime.parse(handelDataMap[DATO].toString());
-      var _month = _dato.month;
-      var _year = _dato.year;
-      return (_year == 2019); 
+      return (_dato.isAfter(fromDate));
     });
 
+    // refactore!
     var handelGroupedAsList$ = // Stream of <GroupByObservable<dynamic, Observable>>  i.e  GroupByObservable<group.key , Stream of [handel]>
         obsvHandle$.groupBy((handelDataMap) {
-      if (groupBy_ == GroupBy.MONTH)
+      if (groupBy == GroupBy.MONTH)
         return DateTime.parse(handelDataMap[DATO].toString()).month;
-      else if (groupBy_ == GroupBy.WEEK)
+      else if (groupBy == GroupBy.WEEK)
         return handelDataMap[UKE_NR];
       else
         return handelDataMap[BUTIKK];
     });
+
+    var memoProdukter = Map<String, dynamic>();
 
     var obsData$ = // GroupByObservable<handelDataMap, key> groupByObservable
         handelGroupedAsList$.flatMap((handelGroupedBykey) {
@@ -118,13 +144,16 @@ class Qry{
       var obsVarer$ = // Stream of <vare>
           handelGroupedBykey.map((handelDataMap) {
         if (handelGroupedBykey.key == null)
-          print("**Err****Err****Err****Err**\n$handelDataMap**Err****Err****Err****Err**\n");
+          print(
+              "**Err****Err****Err****Err**\n$handelDataMap**Err****Err****Err****Err**\n");
 
         return handelDataMap[VARER];
       }).expand((vare) => vare);
 
-      var obsChartDateExpanded$ =
-          _produceChartDataForEachVare(obsVare$: obsVarer$, chartDataType: chartDataType);
+      var obsChartDateExpanded$ = _produceChartDataForEachVare(
+          obsVare$: obsVarer$,
+          memoProdukter: memoProdukter,
+          chartDataType: chartDataType);
 
       var obsCharDataFolded$;
       if (chartDataType == ChartDataType.NUTRITIONAL_CONTENT) {
@@ -152,7 +181,8 @@ class Qry{
           return acc + nr;
         }).asObservable();
       }
-      return obsCharDataFolded$.map((data) => {"key": handelGroupedBykey.key, "data": data});
+      return obsCharDataFolded$
+          .map((data) => {"key": handelGroupedBykey.key, "data": data});
     });
     return obsData$;
   }
@@ -164,7 +194,8 @@ class Qry{
     Map<String, dynamic> produkterMap = (accMap["produkter"]) ?? {};
 
     produkterMap.update(_data["produkt"], (oldMap) {
-      oldMap[KARBOHYDRATER] = (oldMap[KARBOHYDRATER] ?? 0) + _data[KARBOHYDRATER];
+      oldMap[KARBOHYDRATER] =
+          (oldMap[KARBOHYDRATER] ?? 0) + _data[KARBOHYDRATER];
       return oldMap;
     }, ifAbsent: () => {KARBOHYDRATER: _data[KARBOHYDRATER]});
 
@@ -187,8 +218,10 @@ class Qry{
 
     accMap.update(KARBOHYDRATER, (oldValue) => oldValue + _data[KARBOHYDRATER],
         ifAbsent: () => _data[KARBOHYDRATER]);
-    accMap.update(FETT, (oldValue) => oldValue + _data[FETT], ifAbsent: () => _data[FETT]);
-    accMap.update(PROTEIN, (oldValue) => oldValue + _data[PROTEIN], ifAbsent: () => _data[PROTEIN]);
+    accMap.update(FETT, (oldValue) => oldValue + _data[FETT],
+        ifAbsent: () => _data[FETT]);
+    accMap.update(PROTEIN, (oldValue) => oldValue + _data[PROTEIN],
+        ifAbsent: () => _data[PROTEIN]);
     accMap.update("Kostnad", (oldValue) => oldValue + _data["Kostnad"],
         ifAbsent: () => _data["Kostnad"]);
     accMap.update("Kostnad", (oldValue) => oldValue + _data["Kostnad"],
@@ -253,7 +286,7 @@ class Qry{
     //       .expand((varer) => varer)
     //       .where(qryForVarer);
 
-    /// qryForOuterAttr: initial filtering, that is based on fields which not a list (NOT the VARER field) i.e. BUTIKK, DATO ... 
+    /// qryForOuterAttr: initial filtering, that is based on fields which not a list (NOT the VARER field) i.e. BUTIKK, DATO ...
     /// qryForVarer: filtering based on the value of each elem in the list (VARER field)
     return DataDB.getCollectionSnapshotAsObservable(colPATH: HANDEL_PATH)
         .expand((docSnapshotList) => docSnapshotList)
@@ -270,7 +303,10 @@ class Qry{
         SUMMEN: docSnapshot.data[SUMMEN],
       };
 
-      return {"handelInfo": handelInfo, "varerObsv": Observable.just(docSnapshot.data[VARER])};
+      return {
+        "handelInfo": handelInfo,
+        "varerObsv": Observable.just(docSnapshot.data[VARER])
+      };
     }).flatMap((wrappedData) {
       Observable varerObsv = wrappedData["varerObsv"];
       return varerObsv
@@ -281,8 +317,6 @@ class Qry{
                 "vare": vare,
               });
     });
-
-    
   }
 
 // Qry.filterHandelForGivenCondition(qry: (docSnapshot) => docSnapshot.data[BUTIKK]?.toString()?.toLowerCase() == "rema").listen((docSnapshot)=>print(docSnapshot.data));
@@ -324,7 +358,9 @@ class Qry{
 // //  */
 
   static void addBrgnNaeringToVarer() {
-    var obsHandel$ = DataDB.getCollectionSnapshotAsObservable(colPATH: HANDEL_PATH).expand((list) => list);
+    var obsHandel$ =
+        DataDB.getCollectionSnapshotAsObservable(colPATH: HANDEL_PATH)
+            .expand((list) => list);
 
     var obs$ = obsHandel$.concatMap((handelSnapShot) {
       List varer = handelSnapShot[VARER];
@@ -351,14 +387,19 @@ class Qry{
     Stopwatch perf = new Stopwatch();
     perf.start();
 
-    var wrappedHandel$ = DataDB.getCollectionSnapshotAsObservable(colPATH: HANDEL_PATH)
-        .expand((docSnapshotList) => docSnapshotList)
-        .map((docSnapshot) => docSnapshot)
-        .map((docSnapshot) {
-      return {"docSnapshot": docSnapshot, "varerObsv": Observable.just(docSnapshot.data[VARER])};
+    var wrappedHandel$ =
+        DataDB.getCollectionSnapshotAsObservable(colPATH: HANDEL_PATH)
+            .expand((docSnapshotList) => docSnapshotList)
+            .map((docSnapshot) => docSnapshot)
+            .map((docSnapshot) {
+      return {
+        "docSnapshot": docSnapshot,
+        "varerObsv": Observable.just(docSnapshot.data[VARER])
+      };
     });
 
-    Observable<DocumentSnapshot> obs = wrappedHandel$.flatMap((wrappedSnapshotHandel) {
+    Observable<DocumentSnapshot> obs =
+        wrappedHandel$.flatMap((wrappedSnapshotHandel) {
       // bool needToUpdate = false;
 
       Observable varerObsv = wrappedSnapshotHandel["varerObsv"];
@@ -370,7 +411,8 @@ class Qry{
             .map((prodSnapshot) {
               if (vare[NAVN] == prodSnapshot.data[NAVN] &&
                   vare[PRODUKT_ID] != prodSnapshot.documentID) {
-                DocumentSnapshot handelSnapshot = wrappedSnapshotHandel["docSnapshot"];
+                DocumentSnapshot handelSnapshot =
+                    wrappedSnapshotHandel["docSnapshot"];
                 print(
                     " handel_documentID ${handelSnapshot.documentID} vare ${vare[NAVN]} : \n\t oldValue: ${vare[PRODUKT_ID]}\n\t newValue: ${prodSnapshot.documentID}");
                 vare[PRODUKT_ID] = prodSnapshot.documentID;
@@ -392,8 +434,8 @@ class Qry{
     });
 
     obs.listen((docSnapshot) {
-      print("  &&&&                                     ${docSnapshot.documentID}");
-
+      print(
+          "  &&&&                                     ${docSnapshot.documentID}");
     }).onDone(() {
       print("The Total amount of cal. time is ${perf.elapsed.inSeconds}sec");
       perf.stop();
@@ -411,7 +453,8 @@ class Qry{
         if (nettovekt is! num || nettovekt > 1) {
           print(' **********************************************');
           print(' produktID is ${docSnapshot.documentID} ');
-          print(' navn: ${docSnapshot.data[NAVN]},  nettovekt: ${docSnapshot.data[NETTOVEKT]} ');
+          print(
+              ' navn: ${docSnapshot.data[NAVN]},  nettovekt: ${docSnapshot.data[NETTOVEKT]} ');
           print(' **********************************************');
           // var nettovektNum = Util.parseStringtoNum(docSnapshot.data[NETTOVEKT].toString());
           // docSnapshot.data[NETTOVEKT] = nettovektNum;
@@ -422,7 +465,6 @@ class Qry{
   }
 
   static void addWeekNrField() {
-
     var ob$ = DataDB.getCollectionSnapshotAsObservable(colPATH: HANDEL_PATH)
         .expand((docSnapshotList) => docSnapshotList)
         .map((docSnapshot) => docSnapshot)
@@ -451,8 +493,8 @@ class Qry{
     // else if(val.toString().toLowerCase() == "kg" )
     //   val = "Løsvekt";
 
-    docSnapshot.reference
-        .updateData({newFieldName: val, oldFieldName: FieldValue.delete()}).then((v) {});
+    docSnapshot.reference.updateData(
+        {newFieldName: val, oldFieldName: FieldValue.delete()}).then((v) {});
   }
 }
 

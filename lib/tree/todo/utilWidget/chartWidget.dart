@@ -303,7 +303,7 @@ class _ChartWidgetState extends State<ChartWidget> {
     // This is due to how _generateStreamForChartData implemented?!/¤%/
 
     return Qry.getChartData(
-            groupBy_: GroupBy.MONTH,
+            groupBy: GroupBy.MONTH,
             chartDataType: ChartDataType.NUTRITIONAL_CONTENT,
             foldingby: FoldingBy.FOLD)
 

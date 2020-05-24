@@ -11,7 +11,10 @@ class HandleListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget getList(List<DocumentSnapshot> documents) {
 
-      // Qry.filterProdukt(qry: (docSnapshot)=> docSnapshot.data[STREKKODE] == 7039010535250 ).listen((docSnapshot){
+      // Qry.filterProdukt(qry: (docSnapshot)=> docSnapshot.data[ER_MATVARE] && (docSnapshot.data[NETTOVEKT] > 1) ).listen((docSnapshot){
+      //   print(docSnapshot.data);
+      // });
+      // Qry.filterProdukt(qry: (docSnapshot)=> docSnapshot.data[NAVN].toString().contains("chilinøtter") ).listen((docSnapshot){
       //   print(docSnapshot.data);
       // });
 
@@ -20,12 +23,25 @@ class HandleListWidget extends StatelessWidget {
       //   qryForVarer: (vare) => (vare[NAVN].toString().toLowerCase().contains("spagh") && vare[PRODUKT_ID].toString() != "101010108318"),
       // ).listen((data) => print("${data['handelInfo'][DATO]}  \n  ${data['vare']['navn']} \n  ${data['vare'][PRODUKT_ID]}\n  ${data['vare'][STREKKODE]}" ));
 
-      Qry.filterVarerForGivenCondition(
-        qryForOuterAttr: (handelDocSnapshot) => true,
-        qryForVarer: (vare) => vare[NAVN].toString().toLowerCase().contains("hand") ,
-      ).listen((data) => print("${data['handelInfo'][DATO]}  \n  ${data['vare']['navn']} \n  ${data['vare'][PRODUKT_ID]}\n  ${data['vare'][STREKKODE]}" ));
+      // Qry.filterVarerForGivenCondition(
+      //   qryForOuterAttr: (handelDocSnapshot) => true,
+      //   qryForVarer: (vare) => vare[NAVN].toString().toLowerCase().contains("hand") ,
+      // ).listen((data) => print("${data['handelInfo'][DATO]}  \n  ${data['vare']['navn']} \n  ${data['vare'][PRODUKT_ID]}\n  ${data['vare'][STREKKODE]}" ));
 
       // DataDB.backupAll(colPath: HANDEL_PATH);
+
+  Stopwatch s = new Stopwatch();
+  s.start();
+	
+      Qry.getChartData(
+              groupBy: GroupBy.MONTH,
+              chartDataType: ChartDataType.NUTRITIONAL_CONTENT,
+              foldingby: FoldingBy.FOLD)
+              .listen((h) { print(h);
+                print("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤${s.elapsedMilliseconds}¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤"); // around 3000ms
+});
+
+  print("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤${s.elapsedMilliseconds}¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤"); // around 3000ms
 
       // DataDB.getChartData(
       //         groupBy_: GroupBy.MONTH,
@@ -35,12 +51,15 @@ class HandleListWidget extends StatelessWidget {
       //         Util.printChartDataAsProdukterSortedBy(
       //             inputMap: map, compareBy: "Kostnad", take: 10));
       // DataDB.getChartData(groupBy_: GroupBy.MONTH, chartDataType: ChartDataType.NUTRITIONAL_CONTENT).listen(print);
-      
+
       // DataDB.getChartData(groupBy_: GroupBy.MONTH, chartDataType: ChartDataType.NUMBER_OF_GOODS).listen(print);
       // DataDB.getChartData(groupBy_: GroupBy.WEEK,  chartDataType: ChartDataType.NUTRITIONAL_CONTENT).listen(print);
       // DataDB.getChartData(groupBy_: GroupBy.WEEK,  chartDataType: ChartDataType.NUMBER_OF_GOODS).listen(print);
       // DataDB.getChartData(groupBy_: GroupBy.SHOP,  chartDataType: ChartDataType.NUTRITIONAL_CONTENT).listen(print);
       // DataDB.getChartData(groupBy_: GroupBy.SHOP,  chartDataType: ChartDataType.NUMBER_OF_GOODS).listen(print);
+
+
+
       return ListView.builder(
         // padding: new EdgeInsets.all(10.0),
         // controller: _scrollController,
@@ -60,10 +79,14 @@ class HandleListWidget extends StatelessWidget {
         ),
         body: StreamBuilder<QuerySnapshot>(
           stream: DataDB.getStreamHandleCollectionSnapshot(),
-          builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          builder:
+              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
             if (!snapshot.hasData)
-              return Container(margin: const EdgeInsets.only(top: 60.0), child: Text('Loading...'));
-            print("nr of handel docs: " + snapshot.data.documents.length.toString());
+              return Container(
+                  margin: const EdgeInsets.only(top: 60.0),
+                  child: Text('Loading...'));
+            print("nr of handel docs: " +
+                snapshot.data.documents.length.toString());
             return getList(snapshot.data.documents);
           },
         ));
