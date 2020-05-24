@@ -112,7 +112,7 @@ class Qry {
     var fromDate = DateTime.now();
     if (groupBy == GroupBy.MONTH)
       fromDate = fromDate.subtract(Duration(days: 182)); // last 6 months
-    else
+    else 
       fromDate = fromDate.subtract(Duration(days: 91)); // last 3 months
 
     var obsvHandle$ = // Stream of <Map handel>
@@ -498,6 +498,6 @@ class Qry {
   }
 }
 
-enum GroupBy { MONTH, WEEK, SHOP }
+enum GroupBy { MONTH, WEEK }
 enum ChartDataType { NUMBER_OF_GOODS, NUTRITIONAL_CONTENT }
 enum FoldingBy { FOLD, SCAN }
