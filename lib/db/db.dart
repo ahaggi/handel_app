@@ -89,6 +89,20 @@ class DataDB {
     return _getStreamCollectionSnapshot(colPath: PRODUKT_PATH, orderBy: NAVN);
   }
 
+  /// returns a `Stream<QuerySnapshot>` for a [Chart_data_mn] Collection
+  static Stream<QuerySnapshot> getStreamChartDataMNCollectionSnapshot() {
+    return _getStreamCollectionSnapshot(colPath: CHART_DATA_MN_PATH, orderBy: "id" , descending: true);
+  }
+  /// returns a `Stream<QuerySnapshot>` for a [Chart_data_wk] Collection
+  static Stream<QuerySnapshot> getStreamChartDataWKCollectionSnapshot() {
+    return _getStreamCollectionSnapshot(colPath: CHART_DATA_WK_PATH, orderBy: "id");
+  }
+
+  /// returns a `CollectionReference ` for a [produkt] Collection
+  static CollectionReference  getProduktCollection() {
+    return _getCollection(colPath: PRODUKT_PATH);
+  }
+
   //*************************Public "PRODUKT" methods******************* */
 
   /// Create a new [produkt] docRef, populate it with [data] and retruns it's ID
@@ -187,6 +201,30 @@ class DataDB {
     await _getCollection(colPath: HANDEL_BACKUP_PATH).document(docSnapshot.documentID).delete();
     return docSnapshot.reference.delete();
   }
+
+
+
+  //*************************Public "CHART_DATA" methods******************* */
+
+  /// Create a new [chart_data_mn] docRef, populate it with [data] and retruns it's ID
+  ///
+  /// [required] `data`
+  static Future<String> addNewChartDataMN({@required String docID , @required Map<dynamic, dynamic> data }) async {
+    DocumentReference _chartData = _createNewDocument(colPath: CHART_DATA_MN_PATH, docID: docID);
+    await _chartData.setData(data);
+    return _chartData.documentID;
+  }
+  /// Create a new [chart_data_wk] docRef, populate it with [data] and retruns it's ID
+  ///
+  /// [required] `data`
+  static Future<String> addNewChartDataWK({@required String docID , @required Map<dynamic, dynamic> data }) async {
+    DocumentReference _chartData = _createNewDocument(colPath: CHART_DATA_WK_PATH, docID: docID);
+    await _chartData.setData(data);
+    return _chartData.documentID;
+  }
+
+
+
 
   /// Returns `DocumentSnapshot` of a [produkt] if exists, otherwise returns `null`
   ///

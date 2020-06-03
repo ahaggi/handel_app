@@ -19,200 +19,111 @@ class Qry {
 // //  *
 // //  */
 
+  /// returns a "produkt" `Future<DocumentSnapshot>` or `null` for the given documentID.
+  ///
+  /// If no [DocumentSnapshot] exists or its [DocumentSnapshot.data.isEmpty], this will return null.
+  static Future<dynamic> getProduktSnapshotAsFuture(
+      {String vareProduktId}) async {
+    var produktDocSnapshot =
+        await DataDB.getProduktCollection().document(vareProduktId).get();
+    Map<String, dynamic> _data = produktDocSnapshot?.data;
+
+    if (_data != null &&
+        !_data.isEmpty &&
+        produktDocSnapshot.documentID == vareProduktId) {
+      return produktDocSnapshot;
+    } else {
+      return null;
+    }
+  }
+
+  /// returns a "folded Map" `Observable< Map<String,dynamic> >` that contains
+  ///          {produktID: String  , Karbohydrater: num , Fett: num, Protein: num, Kostnad: num , Kalorier:num }
+  /// accept a "vare" `Observable<dynamic>` and "produkter" `Map<String,dynamic>`
+  ///          obsVare$ Observable<  Map<String, dynamic> >
+  ///          memoProdukter {String: prodDocSnapshot.data}
   static Observable<dynamic> _produceChartDataForEachVare(
       {@required Observable obsVare$,
-      @required ChartDataType chartDataType,
       @required Map<String, dynamic> memoProdukter}) {
+    // Observable <Map<String,dynamic>>  {produktID: String  , Karbohydrater: num , Fett: num, Protein: num, Kostnad: num , Kalorier:num , kostnad: num}
+
     var obs$ = obsVare$.concatMap((vareSnapshot) {
       var obsOneProdukt$;
 
       var vareProduktId = vareSnapshot[PRODUKT_ID].toString();
 
       if (memoProdukter[vareProduktId] == null) {
-        obsOneProdukt$ = DataDB.getCollectionSnapshotAsObservable(
-                colPATH: PRODUKT_PATH)
-            .expand((prodDocSnapshotList) => prodDocSnapshotList)
-            .map((prodDocSnapshot) => prodDocSnapshot)
-            //OBS "firstWhere" does NOT filter events as "where", and it has to return (elem or err)
-            .firstWhere(
-                //Stops listening to this stream after the first matching element or error has been received.
-                (prodDocSnapshot) {
-              return (vareProduktId ==
-                  prodDocSnapshot.documentID);
-            }, orElse: () {
-              // This is to avoid throwing an exception
-              print(vareProduktId);
-              return null;
-            })
-            .asObservable()
-            .where(
-                // checks whether firstWhere found matching "produkt" and its ER_MATVARE
-                (prodDataMap) {
-              if (prodDataMap == null) //
-                print("prodDataMap == null");
-              return (prodDataMap != null &&
-                  prodDataMap.data[ER_MATVARE] != null &&
-                  prodDataMap[ER_MATVARE]);
-            })
-            .map((prodDocSnapshot)  {
-              // add the "vare" to memoProdukter 
-              memoProdukter[vareProduktId] = prodDocSnapshot.data;
-            return prodDocSnapshot.data;
-            });
-      }else{
-        obsOneProdukt$ =  Observable<dynamic>.just(memoProdukter[vareProduktId]);
-      }
-
-      if (chartDataType == ChartDataType.NUTRITIONAL_CONTENT) {
-        return obsOneProdukt$.map((prodDataMap) {
-          var data = Map<String, dynamic>();
-          var nettovekt = prodDataMap[NETTOVEKT];
-          var mengde = vareSnapshot[MENGDE];
-          var pris = vareSnapshot[TOTALPRIS];
-
-          var energiPerGram =
-              (prodDataMap[INFO][NAERINGSINNHOLD][ENERGI] / 100);
-
-          var kalorierPerGram =
-              (prodDataMap[INFO][NAERINGSINNHOLD][KALORIER] / 100);
-
-          var karbohydraterPerGram =
-              (prodDataMap[INFO][NAERINGSINNHOLD][KARBOHYDRATER] / 100);
-          var fettPerGram = (prodDataMap[INFO][NAERINGSINNHOLD][FETT] / 100);
-          var proteinPerGram =
-              (prodDataMap[INFO][NAERINGSINNHOLD][PROTEIN] / 100);
-
-          data["produkt"] = prodDataMap[NAVN];
-
-          data[ENERGI] = mengde * (nettovekt * 1000) * energiPerGram;
-          data[KALORIER] = mengde * (nettovekt * 1000) * kalorierPerGram;
-          data[KARBOHYDRATER] =
-              mengde * (nettovekt * 1000) * karbohydraterPerGram;
-          data[FETT] = mengde * (nettovekt * 1000) * fettPerGram;
-          data[PROTEIN] = mengde * (nettovekt * 1000) * proteinPerGram;
-          data["Kostnad"] = pris;
-
-          return data;
+        var prodSnapshotAsFuture =
+            getProduktSnapshotAsFuture(vareProduktId: vareProduktId);
+        obsOneProdukt$ =
+            Observable.fromFuture(prodSnapshotAsFuture).where((prodDataMap) {
+          if (prodDataMap == null) //
+            print("prodDataMap == null");
+          return (prodDataMap != null &&
+              prodDataMap.data[ER_MATVARE] != null &&
+              prodDataMap[ER_MATVARE]);
+        }).map((prodDocSnapshot) {
+          // add the "vare" to memoProdukter
+          memoProdukter[vareProduktId] = prodDocSnapshot.data;
+          return prodDocSnapshot.data;
         });
       } else {
-        return obsOneProdukt$.map((prodDataMap) {
-          return 1;
-        });
-      } // else
+        obsOneProdukt$ = Observable<dynamic>.just(memoProdukter[vareProduktId]);
+      }
+
+      return obsOneProdukt$.map((prodDataMap) {
+        var data = Map<String, dynamic>();
+        var nettovekt = prodDataMap[NETTOVEKT];
+        var mengde = vareSnapshot[MENGDE];
+        var kostnad = vareSnapshot[TOTALPRIS];
+
+        var energiPerGram = (prodDataMap[INFO][NAERINGSINNHOLD][ENERGI] / 100);
+
+        var kalorierPerGram =
+            (prodDataMap[INFO][NAERINGSINNHOLD][KALORIER] / 100);
+
+        var karbohydraterPerGram =
+            (prodDataMap[INFO][NAERINGSINNHOLD][KARBOHYDRATER] / 100);
+        var fettPerGram = (prodDataMap[INFO][NAERINGSINNHOLD][FETT] / 100);
+        var proteinPerGram =
+            (prodDataMap[INFO][NAERINGSINNHOLD][PROTEIN] / 100);
+
+        data[PRODUKT_ID] = vareProduktId;
+
+        data[ENERGI] = mengde * (nettovekt * 1000) * energiPerGram;
+        data[KALORIER] = mengde * (nettovekt * 1000) * kalorierPerGram;
+        data[KARBOHYDRATER] =
+            mengde * (nettovekt * 1000) * karbohydraterPerGram;
+        data[FETT] = mengde * (nettovekt * 1000) * fettPerGram;
+        data[PROTEIN] = mengde * (nettovekt * 1000) * proteinPerGram;
+        data[KOSTNAD] = kostnad;
+        data[MENGDE] = mengde;
+
+        return data;
+      });
     }); //concatMap
     return obs$;
   }
 
-  static Observable<dynamic> getChartData(
-      {month_todo,
-      year_todo,
-      @required groupBy,
-      @required ChartDataType chartDataType,
-      FoldingBy foldingby: FoldingBy.FOLD}) {
-    var fromDate = DateTime.now();
-    if (groupBy == GroupBy.MONTH)
-      fromDate = fromDate.subtract(Duration(days: 182)); // last 6 months
-    else 
-      fromDate = fromDate.subtract(Duration(days: 91)); // last 3 months
-
-    var obsvHandle$ = // Stream of <Map handel>
-        DataDB.getCollectionSnapshotAsObservable(colPATH: HANDEL_PATH)
-            .expand((docSnapshotList) => docSnapshotList)
-            .map((docSnapshot) => docSnapshot.data)
-            .where((handelDataMap) {
-      var _dato = DateTime.parse(handelDataMap[DATO].toString());
-      return (_dato.isAfter(fromDate));
-    });
-
-    // refactore!
-    var handelGroupedAsList$ = // Stream of <GroupByObservable<dynamic, Observable>>  i.e  GroupByObservable<group.key , Stream of [handel]>
-        obsvHandle$.groupBy((handelDataMap) {
-      if (groupBy == GroupBy.MONTH)
-        return DateTime.parse(handelDataMap[DATO].toString()).month;
-      else //if (groupBy == GroupBy.WEEK)
-        return handelDataMap[UKE_NR];
-      
-    });
-
-    var memoProdukter = Map<String, dynamic>();
-
-    var obsData$ = // GroupByObservable<handelDataMap, key> groupByObservable
-        handelGroupedAsList$.flatMap((handelGroupedBykey) {
-      // each event is "groupByObservable" that contains all the items with the same key
-
-      var obsVarer$ = // Stream of <vare>
-          handelGroupedBykey.map((handelDataMap) {
-        if (handelGroupedBykey.key == null)
-          print(
-              "**Err****Err****Err****Err**\n$handelDataMap**Err****Err****Err****Err**\n");
-
-        return handelDataMap[VARER];
-      }).expand((vare) => vare);
-
-      var obsChartDateExpanded$ = _produceChartDataForEachVare(
-          obsVare$: obsVarer$,
-          memoProdukter: memoProdukter,
-          chartDataType: chartDataType);
-
-      var obsCharDataFolded$;
-      if (chartDataType == ChartDataType.NUTRITIONAL_CONTENT) {
-        switch (foldingby) {
-          case FoldingBy.FOLD:
-            obsCharDataFolded$ = obsChartDateExpanded$
-                .fold(
-                    //
-                    Map<String, dynamic>(),
-                    (accMap, _data) => foldingFunction(accMap, _data))
-                .asObservable();
-            break;
-          case FoldingBy.SCAN:
-            obsCharDataFolded$ = obsChartDateExpanded$ //
-                .scan(
-                    //
-                    (accMap, _data, i) => foldingFunction(accMap, _data),
-                    Map<String, dynamic>());
-
-            break;
-          default:
-        }
-      } else {
-        obsCharDataFolded$ = obsChartDateExpanded$.fold(0, (acc, nr) {
-          return acc + nr;
-        }).asObservable();
-      }
-      return obsCharDataFolded$
-          .map((data) => {"key": handelGroupedBykey.key, "data": data});
-    });
-    return obsData$;
-  }
-
+  /// returns a "folded Map" `Map<String,dynamic>` that contains
+  ///         {produkter:Map<String,dynamic>  , Karbohydrater: num , Fett: num, Protein: num, Kostnad: num , Kalorier:num }
+  /// accept an accumulator `Map<String,dynamic>` and new item `Map<String,dynamic>` .
+  ///         accumulator {produkter: Map<String,dynamic>  , Karbohydrater: num , Fett: num, Protein: num, Kostnad: num , Kalorier:num }
+  ///         next item {produktID: String  , Karbohydrater: num , Fett: num, Protein: num, Kostnad: num , Kalorier:num , kostnad: num}
   static Map<String, dynamic> foldingFunction(accMap, _data) {
-    // 2  {Karbohydrater: 7241.405000000002, Fett: 2605.313, Protein: 3409.118, Kostnad: 1609.85 ,
-    //      produkter:{...}}
-
     Map<String, dynamic> produkterMap = (accMap["produkter"]) ?? {};
 
-    produkterMap.update(_data["produkt"], (oldMap) {
-      oldMap[KARBOHYDRATER] =
-          (oldMap[KARBOHYDRATER] ?? 0) + _data[KARBOHYDRATER];
-      return oldMap;
-    }, ifAbsent: () => {KARBOHYDRATER: _data[KARBOHYDRATER]});
-
-    produkterMap.update(_data["produkt"], (oldMap) {
-      oldMap[FETT] = (oldMap[FETT] ?? 0) + _data[FETT];
-      return oldMap;
-    }, ifAbsent: () => {FETT: _data[FETT]});
-
-    produkterMap.update(_data["produkt"], (oldMap) {
-      oldMap[PROTEIN] = (oldMap[PROTEIN] ?? 0) + _data[PROTEIN];
-      return oldMap;
-    }, ifAbsent: () => {PROTEIN: _data[PROTEIN]});
-
-    produkterMap.update(_data["produkt"], (oldMap) {
-      oldMap["Kostnad"] = (oldMap["Kostnad"] ?? 0) + _data["Kostnad"];
-      return oldMap;
-    }, ifAbsent: () => {"Kostnad": _data["Kostnad"]});
-
+    produkterMap.update(
+        _data[PRODUKT_ID],
+        (oldValue) => {
+              KARBOHYDRATER: oldValue[KARBOHYDRATER] + _data[KARBOHYDRATER],
+              FETT: oldValue[FETT] + _data[FETT],
+              PROTEIN: oldValue[PROTEIN] + _data[PROTEIN],
+              KALORIER: oldValue[KALORIER] + _data[KALORIER],
+              KOSTNAD: oldValue[KOSTNAD] + _data[KOSTNAD],
+              MENGDE: oldValue[MENGDE] + _data[MENGDE]
+            },
+        ifAbsent: () => {KARBOHYDRATER: _data[KARBOHYDRATER], FETT: _data[FETT],PROTEIN: _data[PROTEIN], KALORIER: _data[KALORIER],KOSTNAD: _data[KOSTNAD], MENGDE: _data[MENGDE]});
     accMap["produkter"] = produkterMap;
 
     accMap.update(KARBOHYDRATER, (oldValue) => oldValue + _data[KARBOHYDRATER],
@@ -221,12 +132,83 @@ class Qry {
         ifAbsent: () => _data[FETT]);
     accMap.update(PROTEIN, (oldValue) => oldValue + _data[PROTEIN],
         ifAbsent: () => _data[PROTEIN]);
-    accMap.update("Kostnad", (oldValue) => oldValue + _data["Kostnad"],
-        ifAbsent: () => _data["Kostnad"]);
-    accMap.update("Kostnad", (oldValue) => oldValue + _data["Kostnad"],
-        ifAbsent: () => _data["Kostnad"]);
+    accMap.update(KALORIER, (oldValue) => oldValue + _data[KALORIER],
+        ifAbsent: () => _data[KALORIER]);
+    accMap.update(KOSTNAD, (oldValue) => oldValue + _data[KOSTNAD],
+        ifAbsent: () => _data[KOSTNAD]);
     return accMap;
   }
+
+
+  /// returns a  `Observable < Map<String,dynamic> >` that contains
+  ///         {id: String, maaOppdaters:bool , produkter:Map<String,dynamic>  , Karbohydrater: num , Fett: num, Protein: num, Kostnad: num , Kalorier:num }
+
+  static Observable<dynamic> produceChartDataAll({@required groupBy}) {
+    var obsvHandle$ = // Stream of <Map handel>
+        DataDB.getCollectionSnapshotAsObservable(colPATH: HANDEL_PATH)
+            .expand((docSnapshotList) => docSnapshotList)
+            .map((docSnapshot) => docSnapshot.data);
+
+    var memoProdukter = Map<String, dynamic>();
+
+    // refactore!
+    var handelGroupedAsList$ = // Stream of <GroupByObservable<dynamic, Observable>>  i.e  GroupByObservable<group.key , Stream of [handel]>
+        obsvHandle$.groupBy((handelDataMap) {
+      var _handelDato = DateTime.parse(handelDataMap[DATO].toString());
+
+      if (groupBy == GroupBy.MONTH) {
+        String prefix = "${_handelDato.month > 9 ? '' : '0'}";
+
+        return "mnd-${_handelDato.year}-$prefix${_handelDato.month}";
+      } else {
+        //if (groupBy == GroupBy.WEEK)
+        var res = Util.getWeekNumber(_handelDato);
+        var weekNr = res[0];
+        var year = res[1];
+        String prefix = "${weekNr > 9 ? '' : '0'}";
+
+        return "uke-$year-$prefix$weekNr";
+      } //
+    });
+
+    var obsData$ = // GroupByObservable<handelDataMap, key> groupByObservable
+        handelGroupedAsList$.flatMap((handelGroupedBykey) {
+      // each event is "groupByObservable" that contains items which is grouped by some key
+
+      var obsVarer$ = // Stream of <vare>
+          handelGroupedBykey.map((handelDataMap) {
+        if (handelGroupedBykey.key == null)
+          print(
+              "**Err****Err****Err****Err**\n$handelDataMap\n**Err****Err****Err****Err**\n");
+
+        return handelDataMap[VARER];
+      }).expand((vare) => vare);
+
+      var obsChartDateExpanded$ = // Observable <Map<String,dynamic>>  {"produktID": String , Karbohydrater: num , Fett: num, Protein: num, Kostnad: num , Kalorier:num }
+          _produceChartDataForEachVare(
+        obsVare$: obsVarer$,
+        memoProdukter: memoProdukter,
+      );
+
+      var obsCharDataFolded$ = obsChartDateExpanded$
+          .fold(
+              //
+              Map<String, dynamic>(),
+              (accMap, _data) => foldingFunction(accMap, _data))
+          .asObservable();
+
+      return obsCharDataFolded$.map((data) {
+
+        data.putIfAbsent("id", () => handelGroupedBykey.key);
+        data.putIfAbsent("maaOppdaters", () => false);
+        return data;
+      });
+    });
+
+    return obsData$;
+  }
+
+
 
 // // /**
 // //  *
@@ -473,7 +455,7 @@ class Qry {
       var data = docSnapshot.data;
 
       var dato = DateTime.parse(docSnapshot.data[DATO]);
-      int ukeNr = Util.getweekNumber(dato);
+      int ukeNr = Util.getWeekNumber(dato)[0];
       data[UKE_NR] = ukeNr;
 
       print(data);

@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:handle_app/tree/product/productForm/addProduktWidget.dart';
 import 'package:handle_app/tree/todo/utilWidget/myCallback.dart';
-import 'package:handle_app/tree/todo/utilWidget/myTextFormField%20_Draft.dart';
+import 'package:handle_app/tree/todo/utilWidget/myTextFormField.dart';
 import 'package:handle_app/tree/todo/utilWidget/util.dart';
 import 'package:handle_app/config/attrconfig.dart';
 
@@ -108,7 +108,7 @@ class VarerPriceListWidget extends StatelessWidget {
       ///
       String fieldKey = prodID + stateKey;
 
-      Widget _txtFormField = MyTextFormField_draft(
+      Widget _txtFormField = MyTextFormField(
         label: label,
         fieldKey: fieldKey,
         onChanged: (value) => onSavedHandlerVareState(prodID, stateKey)(value),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:collection';
 
 import 'package:handle_app/tree/todo/utilWidget/myCallback.dart';
-import 'package:handle_app/tree/todo/utilWidget/myTextFormField%20_Draft.dart';
+import 'package:handle_app/tree/todo/utilWidget/myTextFormField.dart';
 import 'package:handle_app/tree/todo/utilWidget/util.dart';
 import 'package:handle_app/config/attrconfig.dart';
 
@@ -92,7 +92,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     TextStyle _textStyleBtnText = TextStyle(fontSize: 20.0);
 
-    Widget _navn = MyTextFormField_draft(
+    Widget _navn = MyTextFormField(
       label: "Navn",
       fieldKey: NAVN,
       onChanged: onSavedProduktStateHandler(NAVN),
@@ -118,7 +118,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _strekkode = MyTextFormField_draft(
+    Widget _strekkode = MyTextFormField(
       label: "Strekkode",
       fieldKey: STREKKODE,
       onChanged: onSavedProduktStateHandler(STREKKODE , saveAsNum: true),
@@ -150,7 +150,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _kommentar = MyTextFormField_draft(
+    Widget _kommentar = MyTextFormField(
       label: "Kommentar",
       fieldKey: KOMMENTAR,
       onChanged: onSavedProduktStateHandler(KOMMENTAR),
@@ -173,7 +173,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _nettovekt = MyTextFormField_draft(
+    Widget _nettovekt = MyTextFormField(
       label: "Nettovekt",
       fieldKey: NETTOVEKT,
       onChanged: onSavedProduktStateHandler(NETTOVEKT, saveAsNum: (produktState[ER_MATVARE] ?? false)),
@@ -197,7 +197,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _energi = MyTextFormField_draft(
+    Widget _energi = MyTextFormField(
       label: ENERGI,
       fieldKey: ENERGI,
       onChanged: onSavedProduktStateHandler(ENERGI, saveAsNum: true, isInfo: true),
@@ -224,7 +224,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _kalorier = MyTextFormField_draft(
+    Widget _kalorier = MyTextFormField(
       label: KALORIER,
       fieldKey: KALORIER,
       onChanged: onSavedProduktStateHandler(KALORIER, saveAsNum: true, isInfo: true),
@@ -251,7 +251,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _fett = MyTextFormField_draft(
+    Widget _fett = MyTextFormField(
       label: FETT,
       fieldKey: FETT,
       onChanged: onSavedProduktStateHandler(FETT, saveAsNum: true, isInfo: true),
@@ -278,7 +278,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _enumettetFett = MyTextFormField_draft(
+    Widget _enumettetFett = MyTextFormField(
       label: ENUMETTET,
       fieldKey: ENUMETTET,
       onChanged: onSavedProduktStateHandler(ENUMETTET, saveAsNum: true, isInfo: true),
@@ -305,7 +305,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _flerumettetFett = MyTextFormField_draft(
+    Widget _flerumettetFett = MyTextFormField(
       label: FLERUMETTET,
       fieldKey: FLERUMETTET,
       onChanged: onSavedProduktStateHandler(FLERUMETTET, saveAsNum: true, isInfo: true),
@@ -332,7 +332,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _mettetFett = MyTextFormField_draft(
+    Widget _mettetFett = MyTextFormField(
       label: METTET_FETT,
       fieldKey: METTET_FETT,
       onChanged: onSavedProduktStateHandler(METTET_FETT, saveAsNum: true, isInfo: true),
@@ -359,7 +359,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _karbohydrater = MyTextFormField_draft(
+    Widget _karbohydrater = MyTextFormField(
       label: KARBOHYDRATER,
       fieldKey: KARBOHYDRATER,
       onChanged: onSavedProduktStateHandler(KARBOHYDRATER, saveAsNum: true, isInfo: true),
@@ -386,7 +386,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _sukkerarter = MyTextFormField_draft(
+    Widget _sukkerarter = MyTextFormField(
       label: SUKKERARTER,
       fieldKey: SUKKERARTER,
       onChanged: onSavedProduktStateHandler(SUKKERARTER, saveAsNum: true, isInfo: true),
@@ -413,7 +413,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _stivelse = MyTextFormField_draft(
+    Widget _stivelse = MyTextFormField(
       label: STIVELSE,
       fieldKey: STIVELSE,
       onChanged: onSavedProduktStateHandler(STIVELSE, saveAsNum: true, isInfo: true),
@@ -440,7 +440,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _kostfiber = MyTextFormField_draft(
+    Widget _kostfiber = MyTextFormField(
       label: KOSTFIBER,
       fieldKey: KOSTFIBER,
       onChanged: onSavedProduktStateHandler(KOSTFIBER, saveAsNum: true, isInfo: true),
@@ -467,7 +467,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _protein = MyTextFormField_draft(
+    Widget _protein = MyTextFormField(
       label: PROTEIN,
       fieldKey: PROTEIN,
       onChanged: onSavedProduktStateHandler(PROTEIN, saveAsNum: true, isInfo: true),
@@ -494,7 +494,7 @@ class ProduktFormComponentsWidget extends StatelessWidget {
       ],
     );
 
-    Widget _salt = MyTextFormField_draft(
+    Widget _salt = MyTextFormField(
       label: SALT,
       fieldKey: SALT,
       onChanged: onSavedProduktStateHandler(SALT, saveAsNum: true, isInfo: true),

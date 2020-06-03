@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:charts_flutter/flutter.dart';
+import 'package:charts_flutter/flutter.dart' hide TextStyle;
 import 'package:flutter/material.dart';
 // import 'package:charts_flutter/flutter.dart' as chartsFlutter;
 import 'package:charts_flutter/flutter.dart'
@@ -77,12 +77,14 @@ class GroupedBarChartWidget extends StatelessWidget {
     @required this.karbohydraterList,
     @required this.fettList,
     @required this.proteinList,
+    @required this.kalorierList,
     @required this.kostnadList,
   }) : super(key: key);
 
   final List<OrdinalMeasurment> karbohydraterList;
   final List<OrdinalMeasurment> fettList;
   final List<OrdinalMeasurment> proteinList;
+  final List<OrdinalMeasurment> kalorierList;
   final List<OrdinalMeasurment> kostnadList;
 
   // Disable animations for image tests.
@@ -92,6 +94,7 @@ class GroupedBarChartWidget extends StatelessWidget {
     Series<OrdinalMeasurment, String> karbohydraterSeries;
     Series<OrdinalMeasurment, String> fettSeries;
     Series<OrdinalMeasurment, String> proteinSeries;
+    Series<OrdinalMeasurment, String> kalorierSeries;
     Series<OrdinalMeasurment, String> kostnadSeries;
 
     karbohydraterSeries = Series<OrdinalMeasurment, String>(
@@ -112,6 +115,13 @@ class GroupedBarChartWidget extends StatelessWidget {
         measureFn: (OrdinalMeasurment measures, _) => measures.dataMeasure,
         data: proteinList);
 
+    kalorierSeries = Series<OrdinalMeasurment, String>(
+        id: 'Kalorier',
+        domainFn: (OrdinalMeasurment measures, _) => measures.xLabelDomain,
+        measureFn: (OrdinalMeasurment measures, _) => measures.dataMeasure,
+        data: kalorierList,
+        fillColorFn: (_, __) => MaterialPalette.blue.shadeDefault.darker);
+
     kostnadSeries = Series<OrdinalMeasurment, String>(
         id: 'Kostnad',
         domainFn: (OrdinalMeasurment measures, _) => measures.xLabelDomain,
@@ -123,6 +133,7 @@ class GroupedBarChartWidget extends StatelessWidget {
       karbohydraterSeries,
       fettSeries,
       proteinSeries,
+      kalorierSeries,
       kostnadSeries,
     ];
   }
@@ -133,6 +144,9 @@ class GroupedBarChartWidget extends StatelessWidget {
           animate: animate,
           barGroupingType: BarGroupingType.grouped,
           behaviors: [SeriesLegend()],
+          domainAxis: OrdinalAxisSpec(
+            renderSpec: SmallTickRendererSpec(labelRotation: 60),
+          ),
 
           // behaviors: [
           //   new SeriesLegend(
@@ -271,6 +285,12 @@ class _ChartWidgetState extends State<ChartWidget> {
       OrdinalMeasurment(
           xLabelDomain: "${label}_1", dataMeasure: Random().nextInt(100))
     ];
+    List<OrdinalMeasurment> kalorierList = [
+      OrdinalMeasurment(
+          xLabelDomain: label, dataMeasure: Random().nextInt(100)),
+      OrdinalMeasurment(
+          xLabelDomain: "${label}_1", dataMeasure: Random().nextInt(100))
+    ];
     List<OrdinalMeasurment> kostnadList = [
       OrdinalMeasurment(
           xLabelDomain: label, dataMeasure: Random().nextInt(100)),
@@ -283,6 +303,7 @@ class _ChartWidgetState extends State<ChartWidget> {
             "karbohydraterList": karbohydraterList,
             "fettList": fettList,
             "proteinList": proteinList,
+            "kalorierList": kalorierList,
             "kostnadList": kostnadList,
           }))
         .stream
@@ -294,53 +315,38 @@ class _ChartWidgetState extends State<ChartWidget> {
   Stream<Map<String, List<OrdinalMeasurment>>> _generateStreamForChartData() {
     List<OrdinalMeasurment> karbohydraterList = [];
     List<OrdinalMeasurment> fettList = [];
-    List<OrdinalMeasurment> kostnadList = [];
     List<OrdinalMeasurment> proteinList = [];
-    // Note that if folding mode is "scan" not "fold", the stream will emitt as flw:
-    //  the 1st event will be  [elm1]
-    //  the 2nd event will be  [elm1 , elm2]
-    //  the 3rd event will be  [elm1 , elm2 , elm3]
-    // This is due to how _generateStreamForChartData implemented?!/¤%/
+    List<OrdinalMeasurment> kalorierList = [];
+    List<OrdinalMeasurment> kostnadList = [];
 
-    return Qry.getChartData(
-            groupBy: GroupBy.MONTH,
-            chartDataType: ChartDataType.NUTRITIONAL_CONTENT,
-            foldingby: FoldingBy.FOLD)
+    return DataDB.getStreamChartDataMNCollectionSnapshot()
+        .map((qrySnapshot) => qrySnapshot.documents)
+        .expand((listDocSnapshots) => listDocSnapshots)
+        .take(6)
+        .map((data) {
+// this is the key which the elems are grouped by. i.e "måned", UKE_NR ...
+      var xLabelDomain = data["id"].toString().substring(4);
 
-        // .where((event)=> event["key"]> 17)
-        .map((event) {
-      Map<String, dynamic> data = event["data"];
-Map<String, dynamic> prnt = event["data"]["produkter"];
-      prnt.forEach((k,v){
-        print("$k : \n $v \n\n");
-      });
-      data.forEach((k, v) {
-        if (k == "produkter") return;
-        var xLabelDomain = event[
-            "key"]; // this is the key which the elems are grouped by. i.e "måned", UKE_NR ...
-        var ordinalMeasurment = OrdinalMeasurment(
-            xLabelDomain: xLabelDomain.toString(), dataMeasure: v);
-        switch (k) {
-          case KARBOHYDRATER:
-            karbohydraterList.add(ordinalMeasurment);
-            break;
-          case FETT:
-            fettList.add(ordinalMeasurment);
-            break;
-          case PROTEIN:
-            proteinList.add(ordinalMeasurment);
-            break;
-          case "Kostnad":
-            kostnadList.add(ordinalMeasurment);
-            break;
+      karbohydraterList.add(OrdinalMeasurment(
+          xLabelDomain: xLabelDomain, dataMeasure: data[KARBOHYDRATER]));
 
-          default:
-        }
-      });
+      fettList.add(OrdinalMeasurment(
+          xLabelDomain: xLabelDomain, dataMeasure: data[FETT]));
+
+      proteinList.add(OrdinalMeasurment(
+          xLabelDomain: xLabelDomain, dataMeasure: data[PROTEIN]));
+
+      kalorierList.add(OrdinalMeasurment(
+          xLabelDomain: xLabelDomain, dataMeasure: data[KALORIER]));
+
+      kostnadList.add(OrdinalMeasurment(
+          xLabelDomain: xLabelDomain, dataMeasure: data[KOSTNAD]));
+
       return {
         "karbohydraterList": karbohydraterList,
         "fettList": fettList,
         "proteinList": proteinList,
+        "kalorierList": kalorierList,
         "kostnadList": kostnadList,
       };
     }).asBroadcastStream();
@@ -368,6 +374,7 @@ Map<String, dynamic> prnt = event["data"]["produkter"];
             karbohydraterList: snapshot.data["karbohydraterList"],
             fettList: snapshot.data["fettList"],
             proteinList: snapshot.data["proteinList"],
+            kalorierList: snapshot.data["kalorierList"],
             kostnadList: snapshot.data["kostnadList"],
           );
         }

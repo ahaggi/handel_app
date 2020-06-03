@@ -6,7 +6,7 @@ import 'package:handle_app/db/db.dart';
 import 'package:handle_app/tree/handle/addHandel/pages/handleFormPage/subWidgets/varerPriceListWidget.dart';
 
 import 'package:handle_app/tree/todo/utilWidget/MyTypeAheadTextFormField.dart';
-import 'package:handle_app/tree/todo/utilWidget/myTextFormField%20_Draft.dart';
+import 'package:handle_app/tree/todo/utilWidget/myTextFormField.dart';
 import 'package:handle_app/tree/todo/utilWidget/util.dart';
 import 'package:handle_app/tree/todo/utilWidget/utilUI.dart';
 import 'package:handle_app/config/attrconfig.dart';
@@ -127,7 +127,7 @@ class HandelFormComponentsWidget extends StatelessWidget {
       Widget dt = Row(children: <Widget>[
         Expanded(
           flex: 3,
-          child: MyTextFormField_draft(
+          child: MyTextFormField(
             label: "Dato",
             fieldKey: DATO,
             onTap: selectDateListner,
@@ -162,7 +162,7 @@ class HandelFormComponentsWidget extends StatelessWidget {
       return dt;
     }
 
-    Widget _summen() => MyTextFormField_draft(
+    Widget _summen() => MyTextFormField(
           label: "Summen",
           fieldKey: SUMMEN,
           // enabled: false,
@@ -196,7 +196,7 @@ class HandelFormComponentsWidget extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 flex: 1,
-                child: MyTextFormField_draft(
+                child: MyTextFormField(
                   label: "betalt med bankkort",
                   fieldKey: BANKKORT,
                   onChanged: (value) =>
@@ -232,7 +232,7 @@ class HandelFormComponentsWidget extends StatelessWidget {
               ),
               Expanded(
                 flex: 1,
-                child: MyTextFormField_draft(
+                child: MyTextFormField(
                   label: "betalt kontant",
                   fieldKey: KONTANT,
                   onChanged: (value) =>

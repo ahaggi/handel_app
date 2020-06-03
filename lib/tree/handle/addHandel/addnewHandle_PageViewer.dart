@@ -31,7 +31,7 @@ class AddnewHandle_PageViewerState extends State<AddnewHandle_PageViewer> {
     print(this.handelState);
 
     var dato = DateTime.parse(handelState[DATO]);
-    int ukeNr = Util.getweekNumber(dato);
+    int ukeNr = Util.getWeekNumber(dato)[0];
     handelState[UKE_NR] = ukeNr;
 
     DataDB.addNewHandelDoc(data: handelState).then((str) {

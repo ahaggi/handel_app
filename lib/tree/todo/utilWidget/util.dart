@@ -128,14 +128,56 @@ class Util {
 
   ///********************************************************************************** */
 
-  static int getweekNumber(DateTime date) {
-    // Method: Using ISO weekday numbers (running from 1 for Monday to 7 for Sunday), subtract the weekday from the ordinal date, then add 10. Divide the result by 7. Ignore the remainder; the quotient equals the week number. If the week number thus obtained equals 0, it means that the given date belongs to the preceding (week-based) year. If a week number of 53 is obtained, one must check that the date is not actually in week 1 of the following year.
-    var firstDayOfYear = DateTime.utc(date.year, 1, 1, 0, 0, 0);
-    var dayOfYear = date.difference(firstDayOfYear).inDays + 1;
-    var weekNr = ((dayOfYear - date.weekday + 10) / 7).floor();
-    if (weekNr == 0) weekNr = 52;
-    if (weekNr == 53) weekNr = 1;
+  static List<int> getWeekNumber(DateTime date) {
+    /// ISO 8601
+    /// 
 
-    return weekNr;
+
+    /** This will not work for some of the flwg dates
+ * // {DATE:"1970-01-02", WKNR:1},
+// {DATE:"1970-01-03", WKNR:1},
+// {DATE:"1970-01-04", WKNR:1},
+// {DATE:"1970-01-05", WKNR:2},
+// {DATE:"1970-01-06", WKNR:2},
+// {DATE:"1970-01-07", WKNR:2},
+// {DATE:"1970-01-08", WKNR:2},
+// {DATE:"1970-01-09", WKNR:2},
+// {DATE:"1970-01-10", WKNR:2},
+// {DATE:"1970-12-22", WKNR:52},
+// {DATE:"1970-12-23", WKNR:52},
+// {DATE:"1970-12-24", WKNR:52},
+// {DATE:"1970-12-25", WKNR:52},
+// {DATE:"1970-12-26", WKNR:52},
+// {DATE:"1970-12-27", WKNR:52},
+// {DATE:"1970-12-28", WKNR:53},
+// {DATE:"1970-12-29", WKNR:53},
+// {DATE:"1970-12-30", WKNR:53},
+// {DATE:"1970-12-31", WKNR:53},
+// {DATE:"1971-01-01", WKNR:53},
+// {DATE:"1971-01-02", WKNR:53},
+// {DATE:"1971-01-03", WKNR:53},
+
+ */
+
+    // Set to nearest Thursday: current date + 4 - current day number
+    // Make Sunday's day number 7
+    var mutated_date = date.add(new Duration(days: (4 - date.weekday)));
+
+    // print(mutated_date);
+
+    // Get first day of year
+    var yearStart = DateTime(mutated_date.year, 1, 1, 0, 0, 0);
+
+    // Calculate full weeks to nearest Thursday
+    var week_nr =
+        (((mutated_date.difference(yearStart).inDays) + 1) / 7).ceil();
+
+    //  the weeknr of 2017-01-01 is 52 of the year 2016
+    print(" the weeknr of $date is $week_nr of the year ${mutated_date.year}");
+
+    List<int> res = []..add(week_nr)..add(mutated_date.year);
+    return res;
   }
+
 }
+

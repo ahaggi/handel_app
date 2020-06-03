@@ -1,84 +1,172 @@
 import 'package:flutter/material.dart';
 import './myCallback.dart';
 
-class MyTextFormField extends StatelessWidget {
+class MyTextFormField extends StatefulWidget {
   MyTextFormField({
+    Key key,
     this.label,
     this.autovalidate = false,
-    this.textController,
-    this.currentNode,
     this.keyboardType = TextInputType.text,
     this.enabled = true,
-    this.stateKey,
-    this.orderIndex,  
+    this.fieldKey,
     this.onSaved,
     this.validateInput,
-    this.changeFieldFocus,
-    this.changeFieldFocusByOrderNr,
+    this.changeToNextFocusNode,
     this.addOrRemoveFromInvalidNodes,
-  });
+    this.attachToTextControllerMap,
+    this.removeFromTextControllerMap,
+    this.attachToFocusNodeMap,
+    this.removeFromFocusNodeMap,
+    this.addListnersToFocusNode,
+    this.addListnersToTextController, this.onTap, this.onChanged, this.value,
+  }) : super(key: key);
 
   //  keyboardType: TextInputType.number,
   // textInputAction: TextInputAction.next
 
-  String label;
-  String stateKey;
-  bool autovalidate;
-  bool enabled;
-  double orderIndex;
+  final String label;
+  final String fieldKey;
+  final bool autovalidate;
+  final bool enabled;
+  final String value;
+
+  final TextInputType keyboardType;
+  final MCdynamicDynamic validateInput;
+  final MCvoidVoid changeToNextFocusNode;
+  final MC2Dynamicvoid addOrRemoveFromInvalidNodes;
+  final MCDynamicVoid onSaved;
+  final MCDynamicVoid onChanged;
+  final MC2Dynamicvoid attachToTextControllerMap;
+  final MCDynamicVoid removeFromTextControllerMap;
+  final MCDynamicVoid attachToFocusNodeMap;
+  final MCvoidVoid removeFromFocusNodeMap;
+  final GestureTapCallback onTap;
+
+  /// All the listner has to be of type //TODO
+  final List<dynamic> addListnersToFocusNode;
+  final List<dynamic> addListnersToTextController;
+
+  @override
+  _MyTextFormFieldState createState() => _MyTextFormFieldState();
+}
+
+class _MyTextFormFieldState extends State<MyTextFormField> {
   TextEditingController textController;
-  FocusNode currentNode;
-  MCdynamicDynamic validateInput;
-  MC2Dynamicvoid changeFieldFocus;
-  MCDynamicVoid changeFieldFocusByOrderNr;
-  MC3Dynamicvoid addOrRemoveFromInvalidNodes;
-  MCDynamicVoid onSaved;
-  TextInputType keyboardType;
+  FocusNode focusNode;
+
+  @override
+  void initState() {
+    focusNode = FocusNode(debugLabel: widget.fieldKey);
+    //These 2 functions is called at the build function, this way we can have a consistent FocusNodeMap
+    // attachToFocusNodeMap();
+    // addListnersToFocusNode();
+
+    textController = TextEditingController();
+
+    textController.text = widget.value ?? "";
+
+    attachToTextControllerMap();
+    addListnersToTextController();
+        // print(
+        // "===initState===    ===initState===    ${focusNode.debugLabel}    ${widget.fieldKey}  ===initState===    ===initState===");
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    print(
+        "€€€€dispose€€€€    €€€€dispose€€€€    ${focusNode.debugLabel}    ${widget.fieldKey}  €€€€dispose€€€€    €€€€dispose€€€€");
+
+    if (widget.removeFromTextControllerMap != null)
+      widget.removeFromTextControllerMap(widget.fieldKey);
+
+    if (widget.removeFromFocusNodeMap != null) widget.removeFromFocusNodeMap();
+
+    textController.dispose();
+    focusNode.dispose();
+    super.dispose();
+  }
+
+  void attachToTextControllerMap() {
+    if (widget.attachToTextControllerMap != null)
+      widget.attachToTextControllerMap(widget.fieldKey, textController);
+  }
+
+  void addListnersToTextController() {
+    if (widget.addListnersToTextController != null &&
+        widget.addListnersToTextController.isNotEmpty)
+      widget.addListnersToTextController.forEach((fn) {
+        if (fn is VoidCallback) {
+          textController.removeListener(fn);
+          textController.addListener(fn);
+        } else {
+          textController.removeListener(() => fn(focusNode));
+          textController.addListener(() => fn(focusNode));
+        }
+      });
+  }
+
+  void attachToFocusNodeMap() {
+    if (widget.attachToFocusNodeMap != null)
+      widget.attachToFocusNodeMap(focusNode);
+  }
+
+  void addListnersToFocusNode() {
+    if (widget.addListnersToFocusNode != null &&
+        widget.addListnersToFocusNode.isNotEmpty) {
+      widget.addListnersToFocusNode.forEach((fn) {
+        focusNode.removeListener(() => fn(focusNode));
+        focusNode.addListener(() => fn(focusNode));
+      });
+    }
+  }
+
+  void removeListnersFromFocusNode() {
+    if (widget.addListnersToFocusNode != null &&
+        widget.addListnersToFocusNode.isNotEmpty)
+      widget.addListnersToFocusNode
+          .forEach((fn) => focusNode.removeListener(() => fn(focusNode)));
+  }
 
   @override
   Widget build(BuildContext context) {
+    attachToFocusNodeMap();
 
-    print("¤¤¤¤¤build¤¤¤¤    ¤¤¤¤¤build¤¤¤¤    $label   ¤¤¤¤¤build¤¤¤¤    ¤¤¤¤¤¤¤¤¤¤¤");
+    addListnersToFocusNode();
+
+    // print(
+    //     "¤¤¤¤¤build¤¤¤¤    ¤¤¤¤¤build¤¤¤¤    ${focusNode.debugLabel}    ${widget.fieldKey}    ¤¤¤¤¤build¤¤¤¤    ¤¤¤¤¤¤¤¤¤¤¤");
     return TextFormField(
-      keyboardType: keyboardType,
-      autovalidate: autovalidate,
-      decoration: InputDecoration(labelText: label),
-      enabled: enabled,
 
-      //ikke Nødvendig, verdier vil forbli t.o.m etter validator kall returnerer en err
-      // initialValue: produktState[stateKey],
+      
+      keyboardType: widget.keyboardType,
+      autovalidate: widget.autovalidate,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        labelStyle: TextStyle(fontSize: 14.0),
+      ),
+      enabled: widget.enabled,
       controller: textController,
-      focusNode: currentNode
-      // ..addListener(() {
-      //   if (label == "Strekkode") if (currentNode.hasFocus) {
-      //     this._overlayEntry = this._createOverlayEntry(context);
-      //     Overlay.of(context).insert(this._overlayEntry);
-      //   } else {
-      //     this._overlayEntry.remove();
-      //   }
-      // })
-      ,
-
+      focusNode: focusNode,
       textInputAction: TextInputAction.next,
       onFieldSubmitted: (str) {
-        // Implement ENTEN
-        // Blir brukt i ProduktForm ;;; Fjern denne!!
-        // if (!(currentNode == null || nextFocusNode == null))
-        //   changeFieldFocus(currentNode, nextFocusNode);
-
-        //ELLER
-        //Blir brukt i HandleForm
-        if (changeFieldFocusByOrderNr != null)
-          changeFieldFocusByOrderNr(stateKey);
+        if (widget.changeToNextFocusNode != null)
+          widget.changeToNextFocusNode();
       },
       validator: (str) {
-        String err = validateInput(str);
-        bool valid = err == null;
-        if (currentNode != null)
-          addOrRemoveFromInvalidNodes(valid, currentNode, orderIndex);
-        return err;
+        if (widget.validateInput != null) {
+          String err = widget.validateInput(str);
+          bool valid = err == null;
+          if (widget.addOrRemoveFromInvalidNodes != null)
+            widget.addOrRemoveFromInvalidNodes(valid, focusNode);
+          return err;
+        } else
+          return null;
       },
-      onSaved: onSaved,
+      onSaved: widget.onSaved,
+      onTap: widget.onTap,
+      onChanged: widget.onChanged,
     );
   }
 }

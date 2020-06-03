@@ -43,4 +43,8 @@ const String BRGN_NAERING = 'brgnNaering';
 
 const String UNREGISTERED_PRODUKT = 'UnregisteredProdukt';
 
+const String KOSTNAD = 'kostnad';
+const String MAA_OPPDATERES ='maaOppdateres';
+
+
 

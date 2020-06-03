@@ -61,12 +61,14 @@ class HandelCardWidget extends StatelessWidget {
                     "Butikk:",
                     style: _labelFont,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: Text(
-                      butikk,
-                      style: _dataBoldFont,
-                      overflow: TextOverflow.fade,
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Text(
+                        butikk,
+                        style: _dataBoldFont,
+                        overflow: TextOverflow.fade,
+                      ),
                     ),
                   ),
                 ],
