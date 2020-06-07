@@ -257,7 +257,7 @@ class _ChartWidgetState extends State<ChartWidget> {
   void onUpdateData() {
     // StreamSubscription<dynamic> subscription =
     //     subscription.cancel();
-    bool isRealData = Random().nextInt(4) == 1;
+    bool isRealData = Random().nextInt(2) == 1;
     outputStream =
         isRealData ? _generateStreamForChartData() : _generateDummyData();
     print("############ db data:  $isRealData #############");
@@ -319,7 +319,7 @@ class _ChartWidgetState extends State<ChartWidget> {
     List<OrdinalMeasurment> kalorierList = [];
     List<OrdinalMeasurment> kostnadList = [];
 
-    return DataDB.getStreamChartDataMNCollectionSnapshot()
+    return DataDB.getStreamChartDataWKCollectionSnapshot()
         .map((qrySnapshot) => qrySnapshot.documents)
         .expand((listDocSnapshots) => listDocSnapshots)
         .take(6)

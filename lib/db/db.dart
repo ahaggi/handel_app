@@ -95,7 +95,7 @@ class DataDB {
   }
   /// returns a `Stream<QuerySnapshot>` for a [Chart_data_wk] Collection
   static Stream<QuerySnapshot> getStreamChartDataWKCollectionSnapshot() {
-    return _getStreamCollectionSnapshot(colPath: CHART_DATA_WK_PATH, orderBy: "id");
+    return _getStreamCollectionSnapshot(colPath: CHART_DATA_WK_PATH, orderBy: "id", descending: true);
   }
 
   /// returns a `CollectionReference ` for a [produkt] Collection
