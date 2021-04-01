@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:charts_flutter/flutter.dart' hide TextStyle;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 // import 'package:charts_flutter/flutter.dart' as chartsFlutter;
 import 'package:charts_flutter/flutter.dart'
@@ -15,8 +16,11 @@ import 'package:charts_flutter/flutter.dart'
 import 'dart:async';
 import 'package:handle_app/db/db.dart';
 import 'package:handle_app/db/dbQry.dart';
+import 'package:handle_app/tree/todo/utilWidget/chart/options.dart';
 import 'package:handle_app/tree/todo/utilWidget/loadingIndicator.dart';
 import 'package:handle_app/config/attrconfig.dart';
+
+import 'utilUI.dart';
 
 /**
   List<Series<OrdinalMeasurment, String>> dummyData() {
@@ -189,69 +193,28 @@ class ChartWidget extends StatefulWidget {
 class _ChartWidgetState extends State<ChartWidget> {
   // Instead of didUpdateWidget try to take advantage of AsyncSnapshot's capabilities, especially "monitoring connectionState".
 
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
   //DropDown state
   Map<String, int> dropdownValues = {};
 
   Stream outputStream;
 
+  Map<String, dynamic> selectedMonthsValue = {
+    FROM_MONTH: Map<String, dynamic>()..addAll({"mm": null, "yyyy": null}),
+    TO_MONTH: Map<String, dynamic>()..addAll({"mm": null, "yyyy": null}),
+  };
+  Map<String, dynamic> selectedWeeksValue = {
+    FROM_WEEK: Map<String, dynamic>()..addAll({"wk": null, "yyyy": null}),
+    TO_WEEK: Map<String, dynamic>()..addAll({"wk": null, "yyyy": null}),
+  };
+  GroupBy mode = GroupBy.MONTH;
+  // bool submitBtnEnabled = false; // should've been used instead of floatingActionButton
+
   @override
   void initState() {
     super.initState();
     outputStream = _generateDummyData();
-  }
-
-  Widget _getDropdownMenu({List list, String hintText}) {
-    String key = hintText == "måned" ? "mm" : "yy";
-    var listMenuItems = list
-        .map<DropdownMenuItem<int>>((elm) => DropdownMenuItem<int>(
-              value: elm['value'],
-              child: Text(elm['text']),
-            ))
-        .toList();
-    return DropdownButton<int>(
-      hint: Text(
-        hintText,
-        style: TextStyle(
-          color: Colors.black,
-        ),
-      ),
-      value: dropdownValues[key],
-      onChanged: (int newValue) {
-        dropdownValues[key] = newValue;
-        setState(() {});
-      },
-      items: listMenuItems,
-    );
-  }
-
-  Widget _getRowDropDownMenus() {
-    var monthsList = [
-      {'text': 'Jan', 'value': 1},
-      {'text': 'Feb', 'value': 2},
-      {'text': 'Mar', 'value': 3},
-      {'text': 'Apr', 'value': 4},
-      {'text': 'May', 'value': 5},
-      {'text': 'Jun', 'value': 6},
-      {'text': 'Jul', 'value': 7},
-      {'text': 'Aug', 'value': 8},
-      {'text': 'Sep', 'value': 9},
-      {'text': 'Okt', 'value': 10},
-      {'text': 'Nov', 'value': 11},
-      {'text': 'Des', 'value': 12},
-    ];
-
-    var yearsList = List.generate(2, (n) {
-      var y = DateTime.now().year - n;
-      return {'text': y.toString(), 'value': y};
-    });
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: <Widget>[
-        _getDropdownMenu(hintText: "år", list: yearsList),
-        _getDropdownMenu(hintText: "måned", list: monthsList),
-      ],
-    );
   }
 
   void onUpdateData() {
@@ -319,13 +282,23 @@ class _ChartWidgetState extends State<ChartWidget> {
     List<OrdinalMeasurment> kalorierList = [];
     List<OrdinalMeasurment> kostnadList = [];
 
-    return DataDB.getStreamChartDataWKCollectionSnapshot()
-        .map((qrySnapshot) => qrySnapshot.documents)
-        .expand((listDocSnapshots) => listDocSnapshots)
-        .take(6)
-        .map((data) {
+    Stream<DocumentSnapshot> res;
+
+    if (mode == GroupBy.MONTH) {
+      res = Qry.generateStreamForChartDataMN(
+          from: selectedMonthsValue[FROM_MONTH],
+          to: selectedMonthsValue[TO_MONTH]);
+    } else if (mode == GroupBy.WEEK) {
+      res = Qry.generateStreamForChartDataWK(
+          from: selectedWeeksValue[FROM_WEEK], to: selectedWeeksValue[TO_WEEK]);
+    } else {
+      UtilUI.getCustomSnackBar(
+          scaffoldKey: _scaffoldKey, text: "generateStreamForChartData Err!");
+    }
+
+    return res.take(10).map((data) {
 // this is the key which the elems are grouped by. i.e "måned", UKE_NR ...
-      var xLabelDomain = data["id"].toString().substring(4);
+      var xLabelDomain = data["id"];
 
       karbohydraterList.add(OrdinalMeasurment(
           xLabelDomain: xLabelDomain, dataMeasure: data[KARBOHYDRATER]));
@@ -408,17 +381,50 @@ class _ChartWidgetState extends State<ChartWidget> {
     );
   }
 
+  selectedValuesHandler(_md, valuesMap) {
+    if (_md == GroupBy.MONTH) {
+      // mode = GroupBy.MONTH;
+      selectedMonthsValue = valuesMap;
+      // submitBtnEnabled = // should've been used instead of floatingActionButton
+      //     (selectedMonthsValue[FROM_MONTH]["mm"] != null &&
+      //             selectedMonthsValue[FROM_MONTH]["yyyy"] != null) &&
+      //         (selectedMonthsValue[TO_MONTH]["mm"] != null &&
+      //             selectedMonthsValue[TO_MONTH]["yyyy"] != null);
+    } else if (_md == GroupBy.WEEK) {
+      // mode = GroupBy.WEEK;
+      selectedWeeksValue = valuesMap;
+      // submitBtnEnabled = // should've been used instead of floatingActionButton
+      //     (selectedWeeksValue[FROM_WEEK]["mm"] != null &&
+      //             selectedWeeksValue[FROM_WEEK]["yyyy"] != null) &&
+      //         (selectedWeeksValue[TO_WEEK]["mm"] != null &&
+      //             selectedWeeksValue[TO_WEEK]["yyyy"] != null);
+    }
+  }
+
+  changeModeHandler(_md) {
+    mode = _md;
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: const Text('Flutter Storage Example'),
       ),
       body: Center(
         child: Column(
           children: <Widget>[
-            Expanded(flex: 4, child: _getChartWidget()),
-            Expanded(flex: 1, child: _getRowDropDownMenus()),
+            Expanded(flex: 6, child: _getChartWidget()),
+            Expanded(
+                flex: 2,
+                child: Options(
+                  scaffoldKey: _scaffoldKey,
+                  onSelectCallback: selectedValuesHandler,
+                  changeModeCallback: changeModeHandler,
+                  mode: mode,
+                )),
           ],
         ),
       ),

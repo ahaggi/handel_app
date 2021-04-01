@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:math';
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:handle_app/db/db.dart';
 import 'package:handle_app/config/attrconfig.dart';
 
@@ -130,7 +131,7 @@ class Util {
 
   static List<int> getWeekNumber(DateTime date) {
     /// ISO 8601
-    /// 
+    ///
 
 
     /** This will not work for some of the flwg dates
@@ -179,5 +180,37 @@ class Util {
     return res;
   }
 
-}
+  static bool isItLongYearISO(int year) {
+    dynamic isLeapYear = (int yr) {
+      if (yr % 4 == 0) {
+        if (yr % 100 == 0) {
+          if (yr % 400 == 0) {
+            // print(" $year, is  a leap year");
+            return true;
+          } else {
+            // print(" $year, is not a leap year");
+            return false;
+          }
+        } else {
+          // print(" $year, is  a leap year");
+          return true;
+        }
+      } else {
+        // print(" $year, is not a leap year");
+        return false;
+      }
+    };
 
+    var isLeap = isLeapYear(year);
+
+    if (isLeap) {
+      var wd = DateTime(year, 1, 1).weekday;
+      if ((wd == 4) || (wd == 3)) {
+        return true;
+      }
+    } else if ((DateTime(year, 1, 1).weekday == 4)) {
+      return true;
+    }
+    return false;
+  }
+}

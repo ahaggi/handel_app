@@ -123,7 +123,14 @@ class Qry {
               KOSTNAD: oldValue[KOSTNAD] + _data[KOSTNAD],
               MENGDE: oldValue[MENGDE] + _data[MENGDE]
             },
-        ifAbsent: () => {KARBOHYDRATER: _data[KARBOHYDRATER], FETT: _data[FETT],PROTEIN: _data[PROTEIN], KALORIER: _data[KALORIER],KOSTNAD: _data[KOSTNAD], MENGDE: _data[MENGDE]});
+        ifAbsent: () => {
+              KARBOHYDRATER: _data[KARBOHYDRATER],
+              FETT: _data[FETT],
+              PROTEIN: _data[PROTEIN],
+              KALORIER: _data[KALORIER],
+              KOSTNAD: _data[KOSTNAD],
+              MENGDE: _data[MENGDE]
+            });
     accMap["produkter"] = produkterMap;
 
     accMap.update(KARBOHYDRATER, (oldValue) => oldValue + _data[KARBOHYDRATER],
@@ -138,7 +145,6 @@ class Qry {
         ifAbsent: () => _data[KOSTNAD]);
     return accMap;
   }
-
 
   /// returns a  `Observable < Map<String,dynamic> >` that contains
   ///         {id: String, maaOppdaters:bool , produkter:Map<String,dynamic>  , Karbohydrater: num , Fett: num, Protein: num, Kostnad: num , Kalorier:num }
@@ -198,7 +204,6 @@ class Qry {
           .asObservable();
 
       return obsCharDataFolded$.map((data) {
-
         data.putIfAbsent("id", () => handelGroupedBykey.key);
         data.putIfAbsent("maaOppdaters", () => false);
         return data;
@@ -209,6 +214,44 @@ class Qry {
   }
 
 
+
+
+
+  /// returns a `Stream<DocumentSnapshot>` for a specific period from the [Chart_data_mn] Collection
+  static Stream<DocumentSnapshot> generateStreamForChartDataMN(
+      {@required from, @required to}) {
+    String prefixFm = "${from['mm'] > 9 ? '' : '0'}";
+    String prefixTo = "${to['mm'] > 9 ? '' : '0'}";
+
+    var fromMm = "mnd-${from['yyyy']}-$prefixFm${from['mm']}";
+    var toMm = "mnd-${to['yyyy']}-$prefixTo${to['mm']}";
+
+    return DataDB.getStreamChartDataMNCollectionSnapshot()
+        .map((qrySnapshot) => qrySnapshot.documents)
+        .expand((listDocSnapshots) => listDocSnapshots)
+        .where((docSnapshot) {
+      return ((docSnapshot.documentID).compareTo(fromMm) != -1) &&
+          ((toMm).compareTo(docSnapshot.documentID) != -1);
+    });
+  }
+
+  /// returns a `Stream<DocumentSnapshot>` for a specific period from the [Chart_data_mn] Collection
+  static Stream<DocumentSnapshot> generateStreamForChartDataWK(
+      {@required from, @required to}) {
+    String prefixFm = "${from['wk'] > 9 ? '' : '0'}";
+    String prefixTo = "${to['wk'] > 9 ? '' : '0'}";
+
+    var fromWk = "uke-${from['yyyy']}-$prefixFm${from['wk']}";
+    var toMm = "uke-${to['yyyy']}-$prefixTo${to['wk']}";
+
+    return DataDB.getStreamChartDataWKCollectionSnapshot()
+        .map((qrySnapshot) => qrySnapshot.documents)
+        .expand((listDocSnapshots) => listDocSnapshots)
+        .where((docSnapshot) {
+      return ((docSnapshot.documentID).compareTo(fromWk) != -1) &&
+          ((toMm).compareTo(docSnapshot.documentID) != -1);
+    });
+  }
 
 // // /**
 // //  *

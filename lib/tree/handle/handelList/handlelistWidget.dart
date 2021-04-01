@@ -19,8 +19,8 @@ class HandleListWidget extends StatelessWidget {
 
       // Qry.filterVarerForGivenCondition(
       //   qryForOuterAttr: (handelDocSnapshot) => (handelDocSnapshot.data[BUTIKK]??"").toString().toLowerCase().contains("rema"),
-      //   qryForVarer: (vare) => (vare[NAVN].toString().toLowerCase().contains("spagh") && vare[PRODUKT_ID].toString() != "101010108318"),
-      // ).listen((data) => print("${data['handelInfo'][DATO]}  \n  ${data['vare']['navn']} \n  ${data['vare'][PRODUKT_ID]}\n  ${data['vare'][STREKKODE]}" ));
+      //   qryForVarer: (vare) => (vare[NAVN].toString().toLowerCase().contains("barber") ),
+      // ).listen((data) => print("DATO:${data['handelInfo'][DATO]}, documentID:${data['handelInfo']['documentID']}, SUMMEN:${data['handelInfo'][SUMMEN]}, BUTIKK:${data['handelInfo'][BUTIKK]}  \n  ${data['vare']['navn']} \n  ${data['vare'][PRODUKT_ID]}\n  ${data['vare'][STREKKODE]}" ));
 
       // Qry.filterVarerForGivenCondition(
       //   qryForOuterAttr: (handelDocSnapshot) => (DateTime.parse(handelDocSnapshot[DATO]).month == 2 &&
@@ -30,17 +30,17 @@ class HandleListWidget extends StatelessWidget {
       // ).listen((data) => print("${data['handelInfo'][DATO]}  \n  ${data['vare'][TOTALPRIS]} " ));
 
 
-
+// Qry.filterHandelForGivenCondition(qry: (docSnapshot) => (docSnapshot.data[BUTIKK]??"").toString().toLowerCase().contains("posten")  ).listen((docSnapshot)=>print(docSnapshot.data));
 
 //   Stopwatch s = new Stopwatch();
 //   s.start();
 
 //       Qry.produceChartDataAll(
-//               groupBy: GroupBy.WEEK,
+//               groupBy: GroupBy.MONTH,
 //               )
 //               .listen((data) { 
 //                 print(data);
-//               DataDB.addNewChartDataWK(docID: data["id"], data: data);
+//               DataDB.addNewChartDataMN(docID: data["id"], data: data);
 //                 print("¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤${s.elapsedMilliseconds}¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤"); // around 3000ms
 // });
 
